@@ -1,0 +1,392 @@
+:root {
+  --primary: #4CAF50;
+  --accent: #FFC107;
+  --secondary: #FFFFFF;
+  --app-bg: #f9f9fb;
+  --card-bg: #ffffff;
+  --text: #282c34;
+  --subtle: #e9ecef;
+}
+
+/* Global resets and modern font */
+body, html, .vrroul-app {
+  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Arial, sans-serif;
+  background: var(--app-bg);
+  color: var(--text);
+  padding: 0; margin: 0;
+}
+
+.vrroul-app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--app-bg);
+}
+
+.main-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  font-size: 1.5rem;
+  border-bottom: 1px solid var(--subtle);
+  background: var(--primary);
+  font-weight: 600;
+}
+
+.logo {
+  font-size: 1.2em;
+  letter-spacing: 0.04em;
+}
+
+.challenge-btn {
+  border: none;
+  border-radius: 7px;
+  padding: 8px 18px;
+  cursor: pointer;
+  font-size: 1em;
+  font-weight: 500;
+  background: var(--accent);
+  color: var(--primary);
+  transition: background 0.25s;
+}
+.challenge-btn:hover {
+  filter: brightness(0.93);
+}
+
+.main-content {
+  display: flex;
+  flex: 1 1 0;
+  align-items: stretch;
+  justify-content: stretch;
+  height: 100%;
+  padding: 0 0 16px 0;
+  background: var(--app-bg);
+}
+
+/* Spinner wheel and left pane */
+.left-pane {
+  flex: 0 0 340px;
+  max-width: 350px;
+  min-width: 270px;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 32px 0 0 0;
+  border-right: 1px solid var(--subtle);
+}
+@media (max-width: 800px) {
+  .main-content {
+    flex-direction: column;
+  }
+  .left-pane, .right-pane {
+    max-width: 100%;
+    min-width: 0;
+    border: none;
+  }
+}
+
+/* --- Roulette wheel --- */
+.roulette-wheel-container {
+  position: relative;
+  width: 235px;
+  margin: 0 auto 16px auto;
+}
+.roulette-wheel {
+  width: 210px;
+  height: 210px;
+  border-radius: 50%;
+  border: 5px solid var(--primary);
+  background: #fff;
+  position: relative;
+  margin: 0 auto;
+  box-shadow: 0 4px 8px rgba(44,80,64,0.09);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.wheel-segment {
+  position: absolute;
+  width: 50%;
+  height: 50%;
+  left: 50%;
+  top: 50%;
+  transform-origin: 0% 0%;
+  text-align: right;
+  padding: 12px 14px 2px 0;
+  font-size: 1.08em;
+  font-weight: 500;
+  border-radius: 30px 0 0 30px;
+  background: var(--accent);
+  color: var(--primary);
+  opacity: 0.98;
+  pointer-events: none;
+  user-select: none;
+}
+.wheel-pointer {
+  position: absolute;
+  left: 50%; top: -18px;
+  width: 0; height: 0;
+  border-left: 14px solid transparent;
+  border-right: 14px solid transparent;
+  border-bottom: 23px solid var(--accent);
+  transform: translateX(-50%);
+  z-index: 2;
+}
+.spin-btn {
+  margin: 22px auto 0 auto;
+  display: block;
+  padding: 10px 28px;
+  border: none;
+  border-radius: 16px;
+  background: var(--primary);
+  color: var(--secondary);
+  font-size: 1.1em;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(44,80,64,0.14);
+  transition: background 0.15s, box-shadow 0.15s;
+}
+.spin-btn:disabled {
+  opacity: 0.62;
+  cursor: not-allowed;
+}
+.spin-btn:hover:enabled {
+  background: #379a43;
+}
+
+/* Wheel helper */
+.helper-text {
+  text-align: center;
+  color: #656565;
+  font-size: 1em;
+  margin: 14px auto 0 auto;
+}
+
+/* --- Search, pane, recipe grid --- */
+.right-pane {
+  flex: 1 1 0;
+  padding: 48px 32px 0 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+@media (max-width: 650px) {
+  .right-pane {
+    padding: 24px 8px 0 8px;
+  }
+}
+
+/* Search bar */
+.search-bar {
+  display: flex;
+  margin-bottom: 26px;
+  gap: 8px;
+}
+.search-input {
+  padding: 10px 12px;
+  border: 1.5px solid var(--primary);
+  background: #fff;
+  border-radius: 7px;
+  font-size: 1em;
+  width: 100%;
+  max-width: 340px;
+  transition: border-color 0.2s;
+  outline: none;
+}
+.search-input:focus {
+  border-color: var(--accent);
+}
+
+.search-btn {
+  padding: 10px 19px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1em;
+  font-weight: 600;
+  background: var(--accent);
+  color: var(--primary);
+  cursor: pointer;
+  transition: background 0.18s;
+}
+.search-btn:hover {
+  background: #ffda70;
+}
+
+/* Results/recipes grid */
+.results-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 8px;
+}
+.result-card {
+  background: var(--card-bg);
+  border: 2.5px solid var(--primary);
+  border-radius: 10px;
+  padding: 15px 20px 12px 20px;
+  min-width: 180px;
+  cursor: pointer;
+  transition: box-shadow 0.18s, border 0.18s;
+  margin-bottom: 6px;
+  font-size: 1em;
+  box-shadow: 0 1.5px 6px rgba(44,80,64,0.08);
+}
+.result-card:hover {
+  box-shadow: 0 4px 14px #4caf5059;
+  border-color: var(--accent);
+}
+.mini-ingredients {
+  color: #656565;
+  font-size: 0.98em;
+  margin-top: 4px;
+}
+
+.results-empty {
+  color: #999;
+  font-size: 1.05em;
+  margin: 22px 0;
+  text-align: center;
+}
+
+/* Recipe details card */
+.recipe-card {
+  background: var(--card-bg);
+  border: 2.5px solid var(--primary);
+  border-radius: 14px;
+  box-shadow: 0 3px 11px rgba(44,80,64,0.11);
+  max-width: 398px;
+  padding: 24px 22px 22px 22px;
+  margin: 18px auto 0 auto;
+  position: relative;
+  z-index: 2;
+  color: var(--text);
+  text-align: left;
+  transition: border 0.22s;
+}
+.recipe-card h2 {
+  font-size: 1.6em;
+  margin: 0 0 14px 0;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.recipe-card h4 {
+  margin: 13px 0 6px 0;
+  color: var(--primary);
+  font-size: 1.07em;
+  font-weight: 550;
+}
+.recipe-card ul, .recipe-card ol {
+  margin-left: 19px;
+  padding-left: 0;
+  font-size: 1em;
+  margin-bottom: 2px;
+}
+.nutrition {
+  color: #888;
+  font-style: italic;
+  font-size: 0.99em;
+  margin-top: 14px;
+}
+.close-btn {
+  position: absolute;
+  top: 7px; right: 14px;
+  border: none;
+  background: transparent;
+  font-size: 1.6em;
+  color: #bbb;
+  cursor: pointer;
+}
+.close-btn:hover {
+  color: var(--accent);
+}
+
+/* Empty/instructional states */
+.empty-state {
+  color: #aaa;
+  margin: 30px 0;
+  text-align: left;
+  font-size: 1.16em;
+}
+
+/* Footer */
+.main-footer {
+  padding: 18px 0 17px;
+  text-align: center;
+  color: #676767;
+  background: transparent;
+  border-top: 1px solid var(--subtle);
+  font-size: 0.97em;
+  margin-top: auto;
+}
+
+/* Modal/Challenge me styles */
+.modal-overlay {
+  position: fixed;
+  left: 0; top: 0; right: 0; bottom: 0;
+  background: rgba(72,72,77,0.13);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 80;
+}
+.modal {
+  background: var(--card-bg);
+  border-radius: 14px;
+  border: 2.5px solid var(--primary);
+  box-shadow: 0 7px 28px rgba(44,80,64,0.18);
+  padding: 32px 28px 28px 28px;
+  width: 99vw;
+  max-width: 330px;
+  position: relative;
+}
+.modal h3 {
+  margin-top: 0;
+  font-weight: 600;
+  color: var(--primary);
+  font-size: 1.18em;
+}
+.challenge-submit-btn {
+  margin-top: 18px;
+  border: none;
+  border-radius: 9px;
+  padding: 10px 23px;
+  font-size: 1.06em;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--primary);
+  color: var(--secondary);
+  transition: background 0.17s;
+}
+.challenge-submit-btn:hover {
+  background: #388e3c;
+}
+
+/* Responsive stacking for phones */
+@media (max-width: 740px) {
+  .main-header {
+    flex-direction: column;
+    gap: 8px;
+    font-size: 1.12em;
+  }
+  .main-content {
+    flex-direction: column;
+  }
+  .left-pane {
+    border: none;
+    padding: 18px 0 0 0;
+  }
+  .right-pane {
+    padding: 14px 0 18px 0;
+  }
+  .spin-btn {
+    padding: 9px 18px;
+    font-size: 1em;
+  }
+  .challenge-btn {
+    padding: 8px 13px;
+  }
+}

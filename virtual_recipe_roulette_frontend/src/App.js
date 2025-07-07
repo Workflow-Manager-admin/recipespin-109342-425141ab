@@ -1,0 +1,365 @@
+import React, { useState, useEffect } from "react";
+import "./App.css";
+
+// --- Color theme (matches requirements) ---
+const RECIPE_COLORS = ["#4CAF50", "#FFC107", "#81D4FA", "#F06292", "#FFF176", "#AED581", "#FFD54F", "#E1BEE7", "#B0BEC5"];
+const PRIMARY = "#4CAF50";
+const ACCENT = "#FFC107";
+const SECONDARY = "#FFFFFF";
+
+// --- Mock recipe data ----
+const MOCK_RECIPES = [
+  {
+    id: 1,
+    name: "Avocado Toast",
+    ingredients: ["Bread", "Avocado", "Salt", "Pepper", "Lemon"],
+    steps: [
+      "Toast the bread.",
+      "Mash avocado with lemon, salt and pepper.",
+      "Spread on toast.",
+      "Serve and enjoy."
+    ],
+    nutrition: "220 kcal, 6g protein, 25g carbs",
+    color: RECIPE_COLORS[0]
+  },
+  {
+    id: 2,
+    name: "Lemon Chicken",
+    ingredients: ["Chicken Breast", "Lemon", "Olive Oil", "Garlic", "Thyme"],
+    steps: [
+      "Marinate chicken with lemon, oil, garlic, thyme.",
+      "Pan fry each side until golden.",
+      "Finish with lemon zest.",
+      "Serve hot."
+    ],
+    nutrition: "380 kcal, 25g protein, 5g carbs",
+    color: RECIPE_COLORS[1]
+  },
+  {
+    id: 3,
+    name: "Veggie Stir-Fry",
+    ingredients: ["Broccoli", "Carrot", "Bell Pepper", "Soy Sauce", "Ginger"],
+    steps: [
+      "Chop veggies.",
+      "Stir fry in oil with ginger.",
+      "Add soy sauce and cook till crisp-tender.",
+      "Serve with rice."
+    ],
+    nutrition: "190 kcal, 7g protein, 35g carbs",
+    color: RECIPE_COLORS[2]
+  },
+  {
+    id: 4,
+    name: "Caprese Salad",
+    ingredients: ["Tomato", "Mozzarella", "Basil", "Olive Oil", "Salt"],
+    steps: [
+      "Slice tomato and mozzarella.",
+      "Layer with basil leaves.",
+      "Drizzle olive oil and sprinkle salt.",
+      "Serve."
+    ],
+    nutrition: "250 kcal, 9g protein, 6g carbs",
+    color: RECIPE_COLORS[3]
+  }
+];
+
+// --- Helper Functions ----
+const getRandomInt = (max) => Math.floor(Math.random() * max);
+
+// --- Spinner/Wheel component ---
+function RecipeWheel({ recipes, onSpinResult, spinning, setSpinning }) {
+  const [rotation, setRotation] = useState(0);
+  const [spinDisabled, setSpinDisabled] = useState(false);
+
+  // Initiate the spin
+  const handleSpin = () => {
+    if (spinning) return;
+    setSpinning(true);
+    setSpinDisabled(true);
+
+    // Select a random recipe index
+    const recipeCount = recipes.length;
+    const targetIdx = getRandomInt(recipeCount);
+    const baseRot = 1440; // at least 4 full circles
+    const slice = 360 / recipeCount;
+    const targetAngle = (recipeCount - targetIdx) * slice + getRandomInt(slice);
+    const finalRotation = baseRot + targetAngle;
+
+    setRotation(finalRotation);
+
+    // Complete spin after animation (2s)
+    setTimeout(() => {
+      setSpinning(false);
+      setSpinDisabled(false);
+      onSpinResult(recipes[targetIdx]);
+    }, 2000);
+  };
+
+  const wheelStyle = {
+    transition: spinning ? 'transform 2s cubic-bezier(0.33, 1, 0.68, 1)' : 'none',
+    transform: `rotate(${rotation}deg)`
+  };
+
+  return (
+    <div className="roulette-wheel-container">
+      <div className="roulette-wheel" style={wheelStyle}>
+        {recipes.map((recipe, idx) => {
+          const angle = (360 / recipes.length) * idx;
+          const itemStyle = {
+            transform: `rotate(${angle}deg) translateY(-50%)`,
+            backgroundColor: recipe.color || ACCENT,
+            color: PRIMARY
+          };
+          return (
+            <div key={idx} className="wheel-segment" style={itemStyle}>
+              {recipe.name}
+            </div>
+          );
+        })}
+      </div>
+      <div className="wheel-pointer" />
+      <button
+        className="spin-btn"
+        style={{ background: PRIMARY, color: SECONDARY }}
+        onClick={handleSpin}
+        disabled={spinDisabled}
+        aria-label="Spin for a recipe"
+      >
+        {spinning ? "Spinning..." : "Spin the Wheel"}
+      </button>
+    </div>
+  );
+}
+
+// --- Recipe Details Component ---
+function RecipeCard({ recipe, onClose }) {
+  if (!recipe) return null;
+
+  return (
+    <div className="recipe-card" style={{ borderColor: recipe.color || PRIMARY }}>
+      <button className="close-btn" onClick={onClose} aria-label="Close details">&times;</button>
+      <h2>{recipe.name}</h2>
+      <h4>Ingredients</h4>
+      <ul>
+        {recipe.ingredients.map((ing, i) => <li key={i}>{ing}</li>)}
+      </ul>
+      <h4>Steps</h4>
+      <ol>
+        {recipe.steps.map((step, i) => <li key={i}>{step}</li>)}
+      </ol>
+      <div className="nutrition">{recipe.nutrition}</div>
+    </div>
+  );
+}
+
+// --- Ingredient Search Bar ---
+function IngredientSearch({ onSearch }) {
+  const [input, setInput] = useState("");
+
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter" && input.trim()) {
+      onSearch(input.trim());
+      setInput("");
+    }
+  };
+
+  const handleSearchClick = () => {
+    if (input.trim()) {
+      onSearch(input.trim());
+      setInput("");
+    }
+  };
+
+  return (
+    <div className="search-bar">
+      <input
+        className="search-input"
+        type="text"
+        placeholder="Search by ingredient..."
+        aria-label="Enter ingredient"
+        value={input}
+        onChange={e => setInput(e.target.value)}
+        onKeyDown={handleKeyPress}
+      />
+      <button
+        className="search-btn"
+        style={{ background: ACCENT, color: PRIMARY }}
+        onClick={handleSearchClick}
+        aria-label="Search for ingredient"
+      >
+        Search
+      </button>
+    </div>
+  );
+}
+
+// --- Challenge Me Modal ---
+function ChallengeMeModal({ open, onClose, onChallenge }) {
+  const [leftover, setLeftover] = useState("");
+
+  if (!open) return null;
+
+  const handleChallenge = () => {
+    if (leftover.trim()) {
+      onChallenge(leftover.trim());
+      setLeftover("");
+      onClose();
+    }
+  };
+  return (
+    <div className="modal-overlay">
+      <div className="modal">
+        <button className="close-btn" onClick={onClose} aria-label="Close modal">&times;</button>
+        <h3>'Challenge Me' Mode</h3>
+        <p>Enter your fridge leftovers (comma separated):</p>
+        <input
+          className="search-input"
+          type="text"
+          placeholder="e.g. eggs, cheese, spinach"
+          value={leftover}
+          onChange={e => setLeftover(e.target.value)}
+        />
+        <button
+          className="challenge-submit-btn"
+          style={{ background: PRIMARY, color: SECONDARY }}
+          onClick={handleChallenge}
+        >
+          Find Recipes
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// --- Recipe List/Grid ---
+function RecipeResults({ recipes, onSelect }) {
+  if (!recipes || recipes.length === 0) {
+    return <div className="results-empty">No matching recipes found.</div>;
+  }
+  return (
+    <div className="results-list">
+      {recipes.map((recipe, idx) =>
+        <div
+          key={recipe.id}
+          className="result-card"
+          style={{ background: recipe.color || SECONDARY, borderColor: recipe.color || PRIMARY }}
+          onClick={() => onSelect(recipe)}
+        >
+          <h3>{recipe.name}</h3>
+          <div className="mini-ingredients">
+            {recipe.ingredients.slice(0, 3).join(", ")}
+            {recipe.ingredients.length > 3 ? "..." : ""}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+// -- Main App Component ---
+function App() {
+  const [recipes] = useState(MOCK_RECIPES);
+  const [selectedRecipe, setSelectedRecipe] = useState(null);
+  const [searchResults, setSearchResults] = useState([]);
+  const [showResults, setShowResults] = useState(false); // toggle recipe results grid
+  const [showChallengeModal, setShowChallengeModal] = useState(false);
+  const [spinning, setSpinning] = useState(false);
+  const [highlightedIdx, setHighlightedIdx] = useState(null);
+
+  // Handler: Spin the recipe wheel
+  const handleSpinResult = (recipe) => {
+    setSelectedRecipe(recipe);
+    setShowResults(false);
+  };
+
+  // Handler: Ingredient search
+  const handleIngredientSearch = (q) => {
+    const searchTerm = q.toLowerCase();
+    const matches = recipes.filter(r =>
+      r.ingredients.some(ing => ing.toLowerCase().includes(searchTerm))
+    );
+    setSearchResults(matches);
+    setShowResults(true);
+    setSelectedRecipe(null);
+  };
+
+  // Handler: Challenge me logic
+  const handleChallenge = (leftovers) => {
+    const items = leftovers
+      .split(",")
+      .map(s => s.trim().toLowerCase())
+      .filter(s => !!s);
+    const matches = recipes.filter(r =>
+      items.every(item =>
+        r.ingredients.map(x => x.toLowerCase()).includes(item)
+      )
+    );
+    setSearchResults(matches);
+    setShowResults(true);
+    setSelectedRecipe(null);
+  };
+
+  // Select recipe from search/challenge results
+  const openRecipeFromResults = (recipe) => {
+    setSelectedRecipe(recipe);
+    setShowResults(false);
+  };
+
+  // App main render
+  return (
+    <div className="vrroul-app">
+      <nav className="main-header" style={{ background: PRIMARY }}>
+        <span className="logo" style={{ color: SECONDARY }}>🍳 Recipe Roulette</span>
+        <button
+          className="challenge-btn"
+          style={{ background: ACCENT, color: PRIMARY }}
+          onClick={() => setShowChallengeModal(true)}
+        >
+          Challenge Me
+        </button>
+      </nav>
+      <main className="main-content">
+        <section className="left-pane">
+          <RecipeWheel
+            recipes={recipes}
+            onSpinResult={handleSpinResult}
+            spinning={spinning}
+            setSpinning={setSpinning}
+            highlightedIdx={highlightedIdx}
+          />
+          <div className="helper-text">
+            Spin the wheel for today's random recipe!
+          </div>
+        </section>
+        <section className="right-pane">
+          <IngredientSearch onSearch={handleIngredientSearch} />
+          {showResults && (
+            <div>
+              <h4 style={{ color: PRIMARY }}>Results</h4>
+              <RecipeResults recipes={searchResults} onSelect={openRecipeFromResults} />
+            </div>
+          )}
+          {!showResults && !selectedRecipe && (
+            <div className="empty-state">
+              <span>Or search for a recipe by ingredient 👆</span>
+            </div>
+          )}
+          {selectedRecipe && (
+            <RecipeCard recipe={selectedRecipe} onClose={() => setSelectedRecipe(null)} />
+          )}
+        </section>
+        <ChallengeMeModal
+          open={showChallengeModal}
+          onClose={() => setShowChallengeModal(false)}
+          onChallenge={handleChallenge}
+        />
+      </main>
+      <footer className="main-footer">
+        <span>Made with <span style={{ color: ACCENT }}>♥</span> for foodies — Virtual Recipe Roulette</span>
+      </footer>
+    </div>
+  );
+}
+
+export default App;
