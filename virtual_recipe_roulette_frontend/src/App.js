@@ -319,18 +319,43 @@ function App() {
     setSelectedRecipe(null);
   };
 
-  // Handler: Challenge me logic
+  /**
+   * PUBLIC_INTERFACE
+   * Handles the 'Challenge Me' mode by taking a comma-separated ingredient input,
+   * and finding all recipes that can be fully made from those leftovers.
+   * If no such recipe exists, shows closest matches (at least one leftover matches any recipe ingredient).
+   * Sets results for display.
+   *
+   * @param {string} leftovers - Comma-separated string of user leftover ingredients.
+   */
   const handleChallenge = (leftovers) => {
     const items = leftovers
       .split(",")
       .map(s => s.trim().toLowerCase())
       .filter(s => !!s);
-    const matches = recipes.filter(r =>
-      items.every(item =>
+
+    // "Full match": can make recipe if ALL leftovers are present in the recipe's ingredients
+    const fullMatches = recipes.filter(r =>
+      items.length > 0 && items.every(item =>
         r.ingredients.map(x => x.toLowerCase()).includes(item)
       )
     );
-    setSearchResults(matches);
+
+    if (fullMatches.length > 0) {
+      setSearchResults(fullMatches);
+    } else {
+      // If no full match, find "close matches": any overlap of leftovers with recipe ingredients
+      const closeMatches = recipes
+        .map(r => {
+          const overlapCount = r.ingredients
+            .map(x => x.toLowerCase())
+            .filter(ing => items.includes(ing)).length;
+          return { ...r, overlapCount };
+        })
+        .filter(r => r.overlapCount > 0)
+        .sort((a, b) => b.overlapCount - a.overlapCount);
+      setSearchResults(closeMatches);
+    }
     setShowResults(true);
     setSelectedRecipe(null);
   };
