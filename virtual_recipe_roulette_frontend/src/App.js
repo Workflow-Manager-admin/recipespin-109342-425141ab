@@ -152,32 +152,13 @@ function IngredientWheel({ allIngredients, onSpinResult, spinning, setSpinning }
         aria-label="Spin for an ingredient"
       >
         {spinning ? "Spinning..." : "Spin the Wheel"}
+
+
+
       </button>
     </div>
   );
-}
-
-// --- Recipe Details Component ---
-function RecipeCard({ recipe, onClose }) {
-  if (!recipe) return null;
-
-  return (
-    <div className="recipe-card" style={{ borderColor: recipe.color || PRIMARY }}>
-      <button className="close-btn" onClick={onClose} aria-label="Close details">&times;</button>
-      <h2>{recipe.name}</h2>
-      <h4>Ingredients</h4>
-      <ul>
-        {recipe.ingredients.map((ing, i) => <li key={i}>{ing}</li>)}
-      </ul>
-      <h4>Steps</h4>
-      <ol>
-        {recipe.steps.map((step, i) => <li key={i}>{step}</li>)}
-      </ol>
-      <div className="nutrition">{recipe.nutrition}</div>
-    </div>
-  );
-}
-
+  
 // --- Ingredient Search Bar ---
 function IngredientSearch({ onSearch }) {
   const [input, setInput] = useState("");
@@ -218,6 +199,293 @@ function IngredientSearch({ onSearch }) {
     </div>
   );
 }
+
+
+// --- Recipe Details Component ---
+function RecipeCard({ recipe, onClose }) {
+  if (!recipe) return null;
+
+  return (
+    <div className="recipe-card" style={{ borderColor: recipe.color || PRIMARY }}>
+      <button className="close-btn" onClick={onClose} aria-label="Close details">&times;</button>
+      <h2>{recipe.name}</h2>
+      <h4>Ingredients</h4>
+      <ul>
+        {recipe.ingredients.map((ing, i) => <li key={i}>{ing}</li>)}
+      </ul>
+      <h4>Steps</h4>
+      <ol>
+        {recipe.steps.map((step, i) => <li key={i}>{step}</li>)}
+      </ol>
+      <div className="nutrition">{recipe.nutrition}</div>
+    </div>
+  );
+}
+
+/**
+ * IngredientCollector
+ * UI for adding ingredients one by one, showing a list, and submitting for recipe match.
+ * Modern, light, and clear UI styled to fit right pane.
+ * PUBLIC_INTERFACE
+ */
+function IngredientCollector({ onSubmitRecipeMatch }) {
+  const [ingredientInput, setIngredientInput] = useState("");
+  const [ingredientList, setIngredientList] = useState([]);
+  const [errMsg, setErrMsg] = useState(null);
+
+  const addIngredient = () => {
+    const v = ingredientInput.trim();
+    const already = ingredientList.some(
+      ing => ing.toLowerCase() === v.toLowerCase()
+    );
+    if (v && !already) {
+      setIngredientList(prev => [...prev, v]);
+      setIngredientInput("");
+      setErrMsg(null);
+    } else if (already) {
+      setErrMsg("Ingredient already added.");
+    }
+  };
+
+  const handleInputKeyDown = e => {
+    if (e.key === "Enter") addIngredient();
+  };
+
+  const removeIngredient = ing =>
+    setIngredientList(list => list.filter(x => x !== ing));
+
+  const handleSubmit = () => {
+    if (ingredientList.length === 0) {
+      setErrMsg("Please add at least one ingredient.");
+      return;
+    }
+    onSubmitRecipeMatch(ingredientList);
+  };
+
+  return (
+    <div style={{
+      background: "#fff",
+      borderRadius: 10,
+      boxShadow: "0 1px 4px #8882",
+      padding: "24px 22px",
+      margin: "0 0 16px 0",
+      maxWidth: 410
+    }}>
+      <h4 style={{marginTop:0, color: PRIMARY, letterSpacing: 0.02}}>Build a Recipe Match 🍴</h4>
+      <div style={{display: "flex", gap: 8, marginBottom: 14}}>
+        <input
+          className="search-input"
+          style={{ flex: 1 }}
+          type="text"
+          placeholder="Enter an ingredient..."
+          aria-label="Add ingredient"
+          value={ingredientInput}
+          onChange={e => setIngredientInput(e.target.value)}
+          onKeyDown={handleInputKeyDown}
+        />
+        <button
+          className="search-btn"
+          style={{ background: ACCENT, color: PRIMARY, fontWeight: 600 }}
+          onClick={addIngredient}
+        >
+          Add
+        </button>
+      </div>
+      <div style={{ minHeight: 32 }}>
+        {ingredientList.length === 0 && (
+          <span style={{ color: "#bbb", fontSize: 15 }}>No ingredients added yet.</span>
+        )}
+        {ingredientList.length > 0 &&
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
+            {ingredientList.map((ing, idx) => (
+              <div
+                key={ing}
+                style={{
+                  background: "#f9f9fb",
+                  color: "#222",
+                  borderRadius: 7,
+                  border: "1px solid #e4e4e4",
+                  padding: "4px 9px",
+                  fontSize: "1em",
+                  display: "flex",
+                  alignItems: "center"
+                }}
+              >
+                {ing}
+                <button
+                  aria-label="Remove"
+                  style={{
+                    border: "none",
+                    background: "none",
+                    color: "#e17142",
+                    marginLeft: 5,
+                    fontSize: 15,
+                    cursor: "pointer",
+                    fontWeight: 600
+                  }}
+                  onClick={() => removeIngredient(ing)}
+                  tabIndex={0}
+                  type="button"
+                >×</button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      {errMsg && (
+        <div style={{ color: "#e17142", fontSize: "0.96em", margin: "10px 0 0 0" }}>
+          {errMsg}
+        </div>
+      )}
+      <button
+        type="button"
+        className="challenge-submit-btn"
+        style={{
+          background: PRIMARY,
+          color: SECONDARY,
+          marginTop: 18,
+          width: "100%",
+          fontWeight: 600,
+          fontSize: "1.06em",
+          padding: "10px 0"
+        }}
+        onClick={handleSubmit}
+      >
+        Find Matching Recipe
+
+
+
+      </button>
+    </div>
+  );
+  
+// --- Ingredient Search Bar ---
+function IngredientSearch({ onSearch }) {
+  const [input, setInput] = useState("");
+
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter" && input.trim()) {
+      onSearch(input.trim());
+      setInput("");
+    }
+  };
+
+  const handleSearchClick = () => {
+    if (input.trim()) {
+      onSearch(input.trim());
+      setInput("");
+    }
+  };
+
+  return (
+    <div className="search-bar">
+      <input
+        className="search-input"
+        type="text"
+        placeholder="Search by ingredient..."
+        aria-label="Enter ingredient"
+        value={input}
+        onChange={e => setInput(e.target.value)}
+        onKeyDown={handleKeyPress}
+      />
+      <button
+        className="search-btn"
+        style={{ background: ACCENT, color: PRIMARY }}
+        onClick={handleSearchClick}
+        aria-label="Search for ingredient"
+      >
+        Search
+      </button>
+    </div>
+  );
+}
+
+
+
+// --- Ingredient Search Bar ---
+function IngredientSearch({ onSearch }) {
+  const [input, setInput] = useState("");
+
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter" && input.trim()) {
+      onSearch(input.trim());
+      setInput("");
+    }
+  };
+
+  const handleSearchClick = () => {
+    if (input.trim()) {
+      onSearch(input.trim());
+      setInput("");
+    }
+  };
+
+  return (
+    <div className="search-bar">
+      <input
+        className="search-input"
+        type="text"
+        placeholder="Search by ingredient..."
+        aria-label="Enter ingredient"
+        value={input}
+        onChange={e => setInput(e.target.value)}
+        onKeyDown={handleKeyPress}
+      />
+      <button
+        className="search-btn"
+        style={{ background: ACCENT, color: PRIMARY }}
+        onClick={handleSearchClick}
+        aria-label="Search for ingredient"
+      >
+        Search
+
+
+
+      </button>
+    </div>
+  );
+  
+// --- Ingredient Search Bar ---
+function IngredientSearch({ onSearch }) {
+  const [input, setInput] = useState("");
+
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter" && input.trim()) {
+      onSearch(input.trim());
+      setInput("");
+    }
+  };
+
+  const handleSearchClick = () => {
+    if (input.trim()) {
+      onSearch(input.trim());
+      setInput("");
+    }
+  };
+
+  return (
+    <div className="search-bar">
+      <input
+        className="search-input"
+        type="text"
+        placeholder="Search by ingredient..."
+        aria-label="Enter ingredient"
+        value={input}
+        onChange={e => setInput(e.target.value)}
+        onKeyDown={handleKeyPress}
+      />
+      <button
+        className="search-btn"
+        style={{ background: ACCENT, color: PRIMARY }}
+        onClick={handleSearchClick}
+        aria-label="Search for ingredient"
+      >
+        Search
+      </button>
+    </div>
+  );
+}
+
 
 // --- Challenge Me Modal ---
 function ChallengeMeModal({ open, onClose, onChallenge }) {
@@ -302,6 +570,9 @@ function App() {
   const [showChallengeModal, setShowChallengeModal] = useState(false);
   const [spinning, setSpinning] = useState(false);
 
+  // NEW: State for ingredient-collection based result
+  const [collectorRecipe, setCollectorRecipe] = useState(null);
+
   // Handler: Outcome when ingredient is spun
   const handleSpinResult = (ingredient) => {
     // Spin result now gives ingredient, not recipe object
@@ -310,6 +581,7 @@ function App() {
 
   // Handler: Ingredient search (used by IngredientWheel, ingredient search bar)
   const handleIngredientSearch = (q) => {
+    setCollectorRecipe(null); // hide collector result if user does normal search/spin
     const searchTerm = q.toLowerCase();
     const matches = recipes.filter(r =>
       r.ingredients.some(ing => ing.toLowerCase().includes(searchTerm))
@@ -329,6 +601,7 @@ function App() {
    * @param {string} leftovers - Comma-separated string of user leftover ingredients.
    */
   const handleChallenge = (leftovers) => {
+    setCollectorRecipe(null); // hide collector recipe card
     const items = leftovers
       .split(",")
       .map(s => s.trim().toLowerCase())
@@ -360,10 +633,34 @@ function App() {
     setSelectedRecipe(null);
   };
 
+  // NEW: Handler for ingredient-collection based recipe match
+  // Finds first recipe for which all collected ingredients are present (case insensitive)
+  // Shows a RecipeCard if found, else shows a not found message in collectorRecipe state
+  const handleIngredientCollectSubmit = (ingredientList) => {
+    setShowResults(false);
+    setSelectedRecipe(null);
+    if (!ingredientList || ingredientList.length === 0) {
+      setCollectorRecipe({ notFound: true });
+      return;
+    }
+    const checkLower = (s) => s.toLowerCase();
+    const match = recipes.find(r =>
+      ingredientList.every(ing =>
+        r.ingredients.map(checkLower).includes(ing.toLowerCase())
+      )
+    );
+    if (match) {
+      setCollectorRecipe({ ...match, notFound: false });
+    } else {
+      setCollectorRecipe({ notFound: true, submitted: ingredientList });
+    }
+  };
+
   // Select recipe from search/challenge results
   const openRecipeFromResults = (recipe) => {
     setSelectedRecipe(recipe);
     setShowResults(false);
+    setCollectorRecipe(null);
   };
 
   // App main render
@@ -392,14 +689,37 @@ function App() {
           </div>
         </section>
         <section className="right-pane">
+          <IngredientCollector onSubmitRecipeMatch={handleIngredientCollectSubmit} />
           <IngredientSearch onSearch={handleIngredientSearch} />
+          {collectorRecipe && !collectorRecipe.notFound && (
+            <RecipeCard recipe={collectorRecipe} onClose={() => setCollectorRecipe(null)} />
+          )}
+          {collectorRecipe && collectorRecipe.notFound && (
+            <div style={{
+              background: "#fffefd",
+              margin: "18px auto",
+              border: "2.5px solid #e87a41",
+              borderRadius: 11,
+              color: "#af5341",
+              padding: "16px",
+              fontWeight: 500,
+              maxWidth: 377,
+              boxShadow: "0 1.5px 6px #e6b7a27a"
+            }}>
+              Sorry, no recipes found for{" "}
+              <span style={{
+                fontStyle: "italic",
+                color: "#ca8a04"
+              }}>{collectorRecipe.submitted ? collectorRecipe.submitted.join(", ") : "ingredients"}</span>.
+            </div>
+          )}
           {showResults && (
             <div>
               <h4 style={{ color: PRIMARY }}>Results</h4>
               <RecipeResults recipes={searchResults} onSelect={openRecipeFromResults} />
             </div>
           )}
-          {!showResults && !selectedRecipe && (
+          {!showResults && !selectedRecipe && !collectorRecipe && (
             <div className="empty-state">
               <span>Or search for a recipe by ingredient 👆</span>
             </div>
