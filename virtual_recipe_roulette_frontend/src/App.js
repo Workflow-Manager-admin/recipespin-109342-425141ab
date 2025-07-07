@@ -66,32 +66,52 @@ const MOCK_RECIPES = [
 // --- Helper Functions ----
 const getRandomInt = (max) => Math.floor(Math.random() * max);
 
-// --- Spinner/Wheel component ---
-function RecipeWheel({ recipes, onSpinResult, spinning, setSpinning }) {
+/**
+ * PUBLIC_INTERFACE
+ * IngredientWheel - A more diverse and random ingredient spinner wheel.
+ * Selects random non-repeating ingredients from all available recipes for each spin session.
+ * On spin, returns the chosen ingredient to the parent (so the app can trigger a search or recipe suggestion using that ingredient).
+ */
+function IngredientWheel({ allIngredients, onSpinResult, spinning, setSpinning }) {
   const [rotation, setRotation] = useState(0);
   const [spinDisabled, setSpinDisabled] = useState(false);
+  const [wheelIngredients, setWheelIngredients] = useState([]);
+
+  // Generate new random, non-repeating wheel ingredients when the wheel mounts (or on demand)
+  useEffect(() => {
+    // Create a random selection of unique ingredients from allIngredients
+    function getRandomSample(arr, n) {
+      // Fisher-Yates shuffle for unbiased selection
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a.slice(0, Math.min(n, a.length));
+    }
+    setWheelIngredients(getRandomSample(allIngredients, 12)); // 12 segments, or less if too few ingredients
+  }, [allIngredients, spinning]);
 
   // Initiate the spin
   const handleSpin = () => {
-    if (spinning) return;
+    if (spinning || !wheelIngredients.length) return;
     setSpinning(true);
     setSpinDisabled(true);
 
-    // Select a random recipe index
-    const recipeCount = recipes.length;
-    const targetIdx = getRandomInt(recipeCount);
-    const baseRot = 1440; // at least 4 full circles
-    const slice = 360 / recipeCount;
-    const targetAngle = (recipeCount - targetIdx) * slice + getRandomInt(slice);
+    // Select a random ingredient index
+    const count = wheelIngredients.length;
+    const targetIdx = getRandomInt(count);
+    const baseRot = 1440;
+    const slice = 360 / count;
+    const targetAngle = (count - targetIdx) * slice + getRandomInt(slice);
     const finalRotation = baseRot + targetAngle;
 
     setRotation(finalRotation);
 
-    // Complete spin after animation (2s)
     setTimeout(() => {
       setSpinning(false);
       setSpinDisabled(false);
-      onSpinResult(recipes[targetIdx]);
+      onSpinResult(wheelIngredients[targetIdx]);
     }, 2000);
   };
 
@@ -103,19 +123,25 @@ function RecipeWheel({ recipes, onSpinResult, spinning, setSpinning }) {
   return (
     <div className="roulette-wheel-container">
       <div className="roulette-wheel" style={wheelStyle}>
-        {recipes.map((recipe, idx) => {
-          const angle = (360 / recipes.length) * idx;
-          const itemStyle = {
-            transform: `rotate(${angle}deg) translateY(-50%)`,
-            backgroundColor: recipe.color || ACCENT,
-            color: PRIMARY
-          };
-          return (
-            <div key={idx} className="wheel-segment" style={itemStyle}>
-              {recipe.name}
-            </div>
-          );
-        })}
+        {wheelIngredients.length === 0 ? (
+          <div className="wheel-segment" style={{ color: PRIMARY }}>
+            Add more recipes!
+          </div>
+        ) : (
+          wheelIngredients.map((ingredient, idx) => {
+            const angle = (360 / wheelIngredients.length) * idx;
+            const itemStyle = {
+              transform: `rotate(${angle}deg) translateY(-50%)`,
+              backgroundColor: RECIPE_COLORS[idx % RECIPE_COLORS.length],
+              color: PRIMARY,
+            };
+            return (
+              <div key={idx} className="wheel-segment" style={itemStyle}>
+                {ingredient}
+              </div>
+            );
+          })
+        )}
       </div>
       <div className="wheel-pointer" />
       <button
@@ -123,7 +149,7 @@ function RecipeWheel({ recipes, onSpinResult, spinning, setSpinning }) {
         style={{ background: PRIMARY, color: SECONDARY }}
         onClick={handleSpin}
         disabled={spinDisabled}
-        aria-label="Spin for a recipe"
+        aria-label="Spin for an ingredient"
       >
         {spinning ? "Spinning..." : "Spin the Wheel"}
       </button>
@@ -257,23 +283,32 @@ function RecipeResults({ recipes, onSelect }) {
 }
 
 
-// -- Main App Component ---
+/**
+ * PUBLIC_INTERFACE
+ * Main App Component - now passes all unique ingredients to the IngredientWheel.
+ * When an ingredient is spun, triggers a search for recipes using that ingredient.
+ */
 function App() {
   const [recipes] = useState(MOCK_RECIPES);
+
+  // Unique, deduplicated, alphabetized global ingredient pool from all recipes
+  const ingredientPool = Array.from(
+    new Set(recipes.flatMap(r => r.ingredients))
+  ).sort((a, b) => a.localeCompare(b));
+
   const [selectedRecipe, setSelectedRecipe] = useState(null);
   const [searchResults, setSearchResults] = useState([]);
-  const [showResults, setShowResults] = useState(false); // toggle recipe results grid
+  const [showResults, setShowResults] = useState(false);
   const [showChallengeModal, setShowChallengeModal] = useState(false);
   const [spinning, setSpinning] = useState(false);
-  const [highlightedIdx, setHighlightedIdx] = useState(null);
 
-  // Handler: Spin the recipe wheel
-  const handleSpinResult = (recipe) => {
-    setSelectedRecipe(recipe);
-    setShowResults(false);
+  // Handler: Outcome when ingredient is spun
+  const handleSpinResult = (ingredient) => {
+    // Spin result now gives ingredient, not recipe object
+    handleIngredientSearch(ingredient);
   };
 
-  // Handler: Ingredient search
+  // Handler: Ingredient search (used by IngredientWheel, ingredient search bar)
   const handleIngredientSearch = (q) => {
     const searchTerm = q.toLowerCase();
     const matches = recipes.filter(r =>
@@ -321,15 +356,14 @@ function App() {
       </nav>
       <main className="main-content">
         <section className="left-pane">
-          <RecipeWheel
-            recipes={recipes}
+          <IngredientWheel
+            allIngredients={ingredientPool}
             onSpinResult={handleSpinResult}
             spinning={spinning}
             setSpinning={setSpinning}
-            highlightedIdx={highlightedIdx}
           />
           <div className="helper-text">
-            Spin the wheel for today's random recipe!
+            Spin the wheel for a surprise ingredient!
           </div>
         </section>
         <section className="right-pane">
